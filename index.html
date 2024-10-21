@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday Pookie</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #FFB6C1;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            cursor: pointer;
+            transition: background-color 0.5s ease;
+        }
+        .flash {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            animation: flash 5s infinite;
+        }
+        @keyframes flash {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 0.5; }
+        }
+        h1 {
+            font-size: 3em;
+            text-align: center;
+            color: black;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+            z-index: 1;
+            transition: transform 0.3s ease;
+        }
+        h1:hover {
+            transform: translateY(-20px);
+        }
+        #timer {
+            font-size: 2em;
+            margin-top: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        #soon {
+            font-size: 1em;
+            margin-top: 10px;
+            opacity: 0.7;
+        }
+        .bow {
+            position: fixed;
+            font-size: 1.75em;
+            opacity: 0;
+            pointer-events: none;
+        }
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="flash"></div>
+    <h1 id="greetingText"></h1>
+    <div id="timer"></div>
+    <div id="soon"></div>
+    <audio id="bgMusic" loop>
+        <source src="bgmusic.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <script>
+        const flash = document.querySelector('.flash');
+        const colors = ['#FF69B4', '#FF1493', '#FF00FF', '#C71585', '#DB7093'];
+        const body = document.body;
+        const audio = document.getElementById('bgMusic');
+        const greetingText = document.getElementById('greetingText');
+        const timerElement = document.getElementById('timer');
+        const soonElement = document.getElementById('soon');
+        let isPlaying = false;
+        let backgroundChangeInterval;
+
+        function changeColor() {
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            flash.style.backgroundColor = randomColor;
+        }
+
+        setInterval(changeColor, 1000);
+
+        function changeBackgroundColor() {
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            body.style.backgroundColor = randomColor;
+        }
+
+        body.addEventListener('click', (e) => {
+            const bow = document.createElement('div');
+            bow.textContent = '🎀';
+            bow.className = 'bow';
+            bow.style.left = `${e.clientX}px`;
+            bow.style.top = `${e.clientY}px`;
+            body.appendChild(bow);
+
+            bow.animate([
+                { opacity: 0, transform: 'scale(0.5)' },
+                { opacity: 1, transform: 'scale(1)' },
+                { opacity: 0, transform: 'scale(1.5)' }
+            ], {
+                duration: 2000,
+                easing: 'ease-in-out'
+            }).onfinish = () => bow.remove();
+
+            // Start playing music on click if it's not already playing
+            if (audio.paused) {
+                audio.play().then(() => {
+                    isPlaying = true;
+                    // Start changing background color every 0.5 seconds
+                    backgroundChangeInterval = setInterval(changeBackgroundColor, 500);
+                }).catch(e => console.log("Audio play failed:", e));
+            }
+        });
+
+        function fadeOutAndRestart() {
+            const fadeOutDuration = 5000;
+            const fadeOutInterval = 50;
+            const steps = fadeOutDuration / fadeOutInterval;
+            let currentStep = 0;
+
+            const fadeOutIntervalId = setInterval(() => {
+                currentStep++;
+                audio.volume = 1 - (currentStep / steps);
+
+                if (currentStep >= steps) {
+                    clearInterval(fadeOutIntervalId);
+                    audio.volume = 1;
+                    audio.currentTime = 0;
+                    audio.play().catch(e => console.log("Audio play failed:", e));
+                }
+            }, fadeOutInterval);
+        }
+
+        audio.addEventListener('timeupdate', () => {
+            const buffer = 5;
+            if (audio.currentTime > audio.duration - buffer) {
+                fadeOutAndRestart();
+            }
+        });
+
+        function getTimeRemaining(endtime) {
+            const total = Date.parse(endtime) - Date.parse(new Date());
+            const seconds = Math.floor((total / 1000) % 60);
+            const minutes = Math.floor((total / 1000 / 60) % 60);
+            const hours = Math.floor((total / (1000 * 60 * 60)) % 24);
+            const days = Math.floor(total / (1000 * 60 * 60 * 24));
+            return { total, days, hours, minutes, seconds };
+        }
+
+        function updateGreeting() {
+            const now = new Date();
+            const day = now.getDate();
+            const month = now.getMonth() + 1; // getMonth() returns 0-11
+            const year = now.getFullYear();
+            const nextBirthday = new Date(year, 9, 20); // October is 9 in JavaScript Date
+
+            if (now > nextBirthday) {
+                nextBirthday.setFullYear(year + 1);
+            }
+
+            if (day === 19 && month === 10 && year === 2024) {
+                greetingText.innerHTML = "Happy Eve Pookie🎀";
+                timerElement.innerHTML = "";
+                soonElement.innerHTML = "";
+            } else if (day === 20 && month === 10 && year === 2024) {
+                greetingText.innerHTML = "Happiesttt B'dayyyy Poookieee <3 🎀😢";
+                timerElement.innerHTML = "";
+                soonElement.innerHTML = "";
+                // Autoplay music on birthday
+                if (!isPlaying) {
+                    audio.play().then(() => {
+                        isPlaying = true;
+                        // Start changing background color every 0.5 seconds
+                        backgroundChangeInterval = setInterval(changeBackgroundColor, 500);
+                    }).catch(e => console.log("Audio autoplay failed:", e));
+                }
+            } else if (day === 21 && month === 10 && year === 2024) {
+                greetingText.innerHTML = "Happy Belated B'dayyyy Poookieee <3 🎀😢";
+                timerElement.innerHTML = "";
+                soonElement.innerHTML = "";
+            } else if (day === 20 && month === 8) {
+                greetingText.innerHTML = "B'dayyyy Sooooon <3 Pookieeeee";
+                timerElement.innerHTML = "";
+                soonElement.innerHTML = "";
+            } else {
+                greetingText.innerHTML = "Counting down to Pookie's B'day!";
+                const t = getTimeRemaining(nextBirthday);
+                timerElement.innerHTML = `${t.days}d ${t.hours}h ${t.minutes}m ${t.seconds}s 🎀`;
+                soonElement.innerHTML = "Sooonnnnn🎀.....";
+            }
+        }
+
+        // Update greeting immediately and then every second
+        updateGreeting();
+        setInterval(updateGreeting, 1000);
+    </script>
+</body>
+</html>
